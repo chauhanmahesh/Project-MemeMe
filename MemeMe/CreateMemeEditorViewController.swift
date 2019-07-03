@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextFieldDelegate {
+class CreateMemeEditorViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextFieldDelegate {
 
     @IBOutlet var cameraPick: UIBarButtonItem!
     @IBOutlet var photoLibraryPick: UIBarButtonItem!
@@ -24,17 +24,11 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     private let bottomTextDefaultValue = "BOTTOM"
     
     @IBAction func pickImageFromAlbum(_ sender: Any) {
-        let pickerController = UIImagePickerController()
-        pickerController.delegate = self
-        pickerController.sourceType = .photoLibrary
-        present(pickerController, animated: true, completion: nil)
+        openImagePicker(source: .photoLibrary)
     }
     
     @IBAction func pickImageFromCamera(_ sender: Any) {
-        let pickerController = UIImagePickerController()
-        pickerController.delegate = self
-        pickerController.sourceType = .camera
-        present(pickerController, animated: true, completion: nil)
+        openImagePicker(source: .camera)
     }
     
     @IBAction func shareMeme(_ sender: Any) {
@@ -56,8 +50,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        // Let's check if camera is available or not and disable the control if required.
-        cameraPick.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
         // Also let's subscribe to keyboard notifications.
         subscribeToKeyboardNotifications()
         // Let's set the alignment for Top text field.
@@ -73,19 +65,25 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Let's initialize textfields.
-        initializeTextFields()
+        // Let's check if camera is available or not and disable the control if required.
+        cameraPick.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
+        // Let's setup top text field style
+        setupTextFieldStyle(textField: topText)
+        // Let's setup bottom text field style
+        setupTextFieldStyle(textField: bottomText)
         // Also lets disable the share initially.
         shareMeme.isEnabled = false
     }
     
     // MARK: Custom Methods
-    private func initializeTextFields() {
-        // Setting the initial text for Top text field.
-        topText.text = topTextDefaultValue
-        // Setting the initial text for Bottom text field.
-        bottomText.text = bottomTextDefaultValue
-        
+    private func openImagePicker(source: UIImagePickerController.SourceType) {
+        let pickerController = UIImagePickerController()
+        pickerController.delegate = self
+        pickerController.sourceType = source
+        present(pickerController, animated: true, completion: nil)
+    }
+    
+    private func setupTextFieldStyle(textField: UITextField) {
         // Let's prepare the text attributes.
         let memeTextAttributes: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key.strokeColor: UIColor.black,
@@ -93,12 +91,10 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
             NSAttributedString.Key.strokeWidth:  2,
         ]
-        topText.defaultTextAttributes = memeTextAttributes
-        bottomText.defaultTextAttributes = memeTextAttributes
+        textField.defaultTextAttributes = memeTextAttributes
         
         // Let's set delegates for textfields.
-        topText.delegate = self
-        bottomText.delegate = self
+        textField.delegate = self
     }
     
     private func subscribeToKeyboardNotifications() {
@@ -154,8 +150,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         // Let's reset to the initial view so that new meme can be created.
         memeImage.image = nil
         shareMeme.isEnabled = false
-        topText.text = topTextDefaultValue
-        bottomText.text = bottomTextDefaultValue
+        topText.text = ""
+        bottomText.text = ""
     }
     
     // MARK: Keyboard Notifications callback.
@@ -167,9 +163,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     }
     
     @objc func keyboardWillHide(_ notification: Notification) {
-        if view.frame.origin.y < 0 {
-            view.frame.origin.y = 0
-        }
+        view.frame.origin.y = 0
     }
     
     // MARK: Delegates.
