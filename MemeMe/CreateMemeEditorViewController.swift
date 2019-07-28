@@ -15,7 +15,7 @@ class CreateMemeEditorViewController: UIViewController, UIImagePickerControllerD
     @IBOutlet var topText: UITextField!
     @IBOutlet var bottomText: UITextField!
     @IBOutlet var memeImage: UIImageView!
-    @IBOutlet var navBar: UINavigationBar!
+    //@IBOutlet var navBar: UINavigationBar!
     @IBOutlet var bottomToolbar: UIToolbar!
     @IBOutlet var shareMeme: UIBarButtonItem!
     
@@ -38,7 +38,9 @@ class CreateMemeEditorViewController: UIViewController, UIImagePickerControllerD
         activityController.completionWithItemsHandler = { (activityType, completed:Bool, returnedItems:[Any]?, error: Error?) in
             if completed {
                 // So meme is shared properly. So let's save the meme in the gallery.
-                self.saveMemeImage(memeImage: meme.memeImage)
+                self.saveMemeImage(meme)
+                // Also let's dismiss this page so that user can see list of memes sent.
+                self.dismiss(animated: true, completion: nil)
             }
         }
         present(activityController, animated: true, completion: nil)
@@ -47,6 +49,8 @@ class CreateMemeEditorViewController: UIViewController, UIImagePickerControllerD
     @IBAction func cancelMeme(_ sender: Any) {
         // Let's reset the meme.
         resetMeme()
+        // Also let's dismiss this view and go back to Sent Memes.
+        self.dismiss(animated: true, completion: nil)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -86,12 +90,12 @@ class CreateMemeEditorViewController: UIViewController, UIImagePickerControllerD
     private func setupTextFieldStyle(textField: UITextField) {
         // Let's prepare the text attributes.
         let memeTextAttributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key.strokeColor: UIColor.black,
             NSAttributedString.Key.foregroundColor: UIColor.white,
             NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
-            NSAttributedString.Key.strokeWidth:  2,
         ]
+        
         textField.defaultTextAttributes = memeTextAttributes
+        textField.attributedPlaceholder = NSAttributedString(string:textField.placeholder ?? "MEME TEXT", attributes: [NSAttributedString.Key.foregroundColor: UIColor.white])
         
         // Let's set delegates for textfields.
         textField.delegate = self
@@ -113,8 +117,11 @@ class CreateMemeEditorViewController: UIViewController, UIImagePickerControllerD
         return keyboardSize.cgRectValue.height
     }
     
-    private func saveMemeImage(memeImage: UIImage) {
-        UIImageWriteToSavedPhotosAlbum(memeImage, self, nil, nil)
+    private func saveMemeImage(_ meme: Meme) {
+        UIImageWriteToSavedPhotosAlbum(meme.memeImage, self, nil, nil)
+        // Let's save the meme in the AppDelegate so that they can be shared with other viewControllers.
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        appDelegate.memes.append(meme)
     }
     
     private func getMeme() -> Meme {
@@ -137,12 +144,12 @@ class CreateMemeEditorViewController: UIViewController, UIImagePickerControllerD
     }
     
     private func hideToolbars() {
-        navBar.isHidden = true
+        self.navigationController?.setNavigationBarHidden(true, animated: false)
         bottomToolbar.isHidden = true
     }
     
     private func showToolbars() {
-        navBar.isHidden = false
+        self.navigationController?.setNavigationBarHidden(false, animated: false)
         bottomToolbar.isHidden = false
     }
     
